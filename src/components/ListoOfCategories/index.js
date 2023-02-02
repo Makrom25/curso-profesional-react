@@ -1,26 +1,42 @@
-import React, { useState, useEffect } from "react";
-import { Category } from "../Category";
-import { List, Item } from "./styles";
-import  {initialState}  from '../../initialState'
+import React, { useState, useEffect, Fragment } from 'react'
+import { Category } from '../Category'
+import { List, Item } from './styles'
+import { useCategoriesData } from '../../hooks/useCategoriesData'
+
 const ListOfCategories = () => {
-  const [categories, setCategories] = useState(initialState)
-  
-  useEffect(() =>{
-    fetch('https://makrom25.github.io/api-del-proyecto-de-react/api/db.json')
-      .then(response => response.json)
-      .then(data => {
-        setCategories(data)
-      })
-  }, [])
-  
-  return (
-    <List>
-      {initialState.categories.map((category) => (
-        <Item key={category.id}>
-          <Category {...category} />
-        </Item>
-      ))}
+  const { categories, loading } = useCategoriesData()
+
+  const [showFixed, setShowFixed] = useState(false)
+
+  useEffect(() => {
+    const onScroll = e => {
+      const newShowFixed = window.scrollY > 200
+      showFixed !== newShowFixed && setShowFixed(newShowFixed)
+    }
+
+    document.addEventListener('scroll', onScroll)
+
+    return () => document.removeEventListener('scroll', onScroll)
+  }, [showFixed])
+
+  const renderList = (fixed) => (
+    <List fixed={fixed}>
+      {
+        loading
+          ? <Item key='loading'><Category /> </Item>
+          : categories.map(category =>
+            <Item key={category.id}>
+              <Category {...category} />
+            </Item>)
+      }
     </List>
-  );
-};
-export { ListOfCategories };
+  )
+
+  return (
+    <Fragment>
+      {renderList()}
+      {showFixed && renderList(true)}
+    </Fragment>
+  )
+}
+export { ListOfCategories }
